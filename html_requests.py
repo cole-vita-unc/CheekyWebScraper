@@ -2,9 +2,38 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+
+color_dict = {
+    "Red": ["Tomato", "Maroon", "Crimson"],
+    "Blue": ["SkyBlue", "Navy", "Cobalt"],
+    "Yellow": ["Lemon", "Gold", "Amber"],
+    "Black": ["Onyx", "Charcoal", "Jet"],
+    "White": ["Ivory", "Pearl", "Linen"],
+    "Green": ["Emerald", "Olive", "Jade"],
+    "Purple": ["Lavender", "Violet", "Mauve"],
+    "Orange": ["Pumpkin", "Rustic Orange", "Coral"],
+    "Gray": ["Silver", "Ash", "Pewter"],
+    "Pink": ["Rose", "Blush", "Salmon"],
+    "Brown": ["Chestnut", "Caramel", "Chocolate"],
+    # Add more colors as needed
+}
+
+color_terms = set()
+for base_color, variations in color_dict.items():
+    if base_color:
+        color_terms.add(base_color.lower())
+    for variation in variations:
+        if variation:
+            color_terms.add(variation.lower())
+
+
 # Function to retrieve the JSON string containing the product info from the html of an item page
 def get_product_info(soup):
     scripts = soup.find_all('script', {'type': 'application/ld+json'})
+    if len(scripts) == 0:
+        return None
+    
+    product_info = None
 
     for script in scripts:
         try:
@@ -21,22 +50,36 @@ def get_product_info(soup):
     return product_info
 
 
-# Function to extract item details from Python dictionary 
 def extract_fields(data):
-    # initialize an empty dictionary to hold the extracted fields
+    if data is None:
+        return None
+
+    # Initialize an empty dictionary to hold the extracted fields
     extracted_fields = {}
 
-    # extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
+    # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in data:
         extracted_fields["PRODUCT_TYPE"] = data["name"]
     if "offers" in data and "price" in data["offers"]:
         extracted_fields["PRICE"] = data["offers"]["price"]
+
+    # If "color" is not present in the data, search the product description for color keywords
     if "color" in data:
         extracted_fields["COLOR"] = data["color"]
+    elif ("description" in data) and (data["description"] is not None):
+        product_description = data.get('description', '')
+        description_words = set(product_description.lower().split())
+        color_found = description_words.intersection(color_terms)
+        if color_found:
+            extracted_fields["COLOR"] = color_found.pop()  # Get one color term found
+        else:
+            extracted_fields["COLOR"] = "Not Found"
+
     if "brand" in data and "name" in data["brand"]:
         extracted_fields["BRAND"] = data["brand"]["name"]
-    
+
     return extracted_fields
+
 
 
 # List of links working 
@@ -82,15 +125,20 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    'https://www.yandy.com/products/naughty-nights-tube-chemise-set', 
                    'https://www.savagex.com/shop/baroque-bondage-open-back-brazilian-ud2148800-0687-12089320?psrc=featured_categories_best-sellers', 
                    'https://www.bergdorfgoodman.com/p/chloe-arlene-small-grained-leather-saddle-crossbody-bag-prod180680058?icid=BGWS-HP-R2-XXXX-XXXXXXXXXXXXXXXX-NA-WhatsNew_051623',
-                   'https://www.shopbop.com/scorpian-sunglasses-aire/vp/v=1/1504955196.htm?os=false&breadcrumb=Shop+Women%27s%3EOur+Favorites%3ESummer+%2723+Trend+Edit%3ECool+Shades&folderID=71668&colorSin=2055665417&fm=other-viewall&pf_rd_p=PLACEMENT_ID_PLACEHOLDER&pf_rd_r=IMPRESSION_REQUEST_ID_PLACEHOLDER&ref_=SB_PLP_PDP_W_BOUTI_SUMME_71668_NB_5'
+                   'https://www.shopbop.com/scorpian-sunglasses-aire/vp/v=1/1504955196.htm?os=false&breadcrumb=Shop+Women%27s%3EOur+Favorites%3ESummer+%2723+Trend+Edit%3ECool+Shades&folderID=71668&colorSin=2055665417&fm=other-viewall&pf_rd_p=PLACEMENT_ID_PLACEHOLDER&pf_rd_r=IMPRESSION_REQUEST_ID_PLACEHOLDER&ref_=SB_PLP_PDP_W_BOUTI_SUMME_71668_NB_5',
+                   'https://www.peek-cloppenburg.de/de/stylebop/p/baum-pferdgarten-crop-top-mit-allover-logo-hellgruen-1835414', 
+                   'https://www.neimanmarcus.com/p/alice-olivia-abella-abstract-pleated-puff-sleeve-sweater-prod261700186?icid=NMWS_HP_XXXX_SPXX_ALOVXXXXXXXXXXXX_NAXXXXXX_HPNewArrivals_051223', 
+                   'https://www.viviennewestwood.com/en/women/clothing/shirts-and-tops/metro-shirt-tinted-indigo-15010059W00HLK415.html', 
+                   'https://www.alexandermcqueen.com/en-us/ready-to-wear/panelled-trench-coat-727441QFAAA2019.html',
+                   'https://www.moschino.com/us_en/logo-lettering-python-print-loafers-blue-polma10362c1gmi5709.html'
                    ]
 
 #Input Links for testing 
-test_input_links = ['https://www.peek-cloppenburg.de/de/stylebop/p/baum-pferdgarten-crop-top-mit-allover-logo-hellgruen-1835414', 
-               'https://www.neimanmarcus.com/p/alice-olivia-abella-abstract-pleated-puff-sleeve-sweater-prod261700186?icid=NMWS_HP_XXXX_SPXX_ALOVXXXXXXXXXXXX_NAXXXXXX_HPNewArrivals_051223', 
-               'https://www.viviennewestwood.com/en/women/clothing/shirts-and-tops/metro-shirt-tinted-indigo-15010059W00HLK415.html', 
-               'https://www.alexandermcqueen.com/en-us/ready-to-wear/panelled-trench-coat-727441QFAAA2019.html',
-               'https://www.moschino.com/us_en/logo-lettering-python-print-loafers-blue-polma10362c1gmi5709.html']
+test_input_links = ['https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content', 
+                   'https://www.nordstrom.com/s/on-running-cloudnova-flux-sneaker-women/7366346?origin=category-personalizedsort&breadcrumb=Home%2FWomen%2FNew%20Arrivals%2FShoes&color=101',
+                   'https://www.jcpenney.com/p/worthington-womens-v-neck-elbow-sleeve-pullover-sweater/ppr5008328887?pTmplType=regular&deptId=dept20000013&catId=cat100210007&urlState=%2Fg%2Fwomen%2Fsweaters-cardigans%3Fid%3Dcat100210007&productGridView=medium&badge=new%7Cpetite&cm_re=ZI-_-DEPARTMENT-WOMEN-_-VN-_-CATEGORY-_-SWEATERS_4',
+                   'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895',
+                   'https://www.fashionnova.com/products/oceanside-affair-1-piece-bikini-jade']
 
 # Empty list to store the resulting HTML and product info
 output_html = []
@@ -130,7 +178,7 @@ for link in test_input_links:
         extracted_fields.append(extract_fields(product_info))
 
 
-# Printing for error checkign 
+# Printing for error checking
 for i in range(len(test_input_links)):
     if output_html[i] is None:
          print(f'HTML content of {test_input_links[i]} was not retrieved')
@@ -138,5 +186,5 @@ for i in range(len(test_input_links)):
 # Outputting product info to json files
 for i, product_info in enumerate(product_info_list):
     with open(f'output_{i}.json', 'w') as f:
-        json.dump(product_info, f)
+        #json.dump(product_info, f)
         json.dump(extracted_fields[i], f)
