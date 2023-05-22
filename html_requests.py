@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-# Function to retrieve the JSON containing the product info from the html of an item page
+# Function to retrieve the JSON string containing the product info from the html of an item page
 def get_product_info(soup):
     scripts = soup.find_all('script', {'type': 'application/ld+json'})
 
@@ -19,6 +19,25 @@ def get_product_info(soup):
         except json.JSONDecodeError:
                 continue
     return product_info
+
+
+# Function to extract item details from Python dictionary 
+def extract_fields(data):
+    # initialize an empty dictionary to hold the extracted fields
+    extracted_fields = {}
+
+    # extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
+    if "name" in data:
+        extracted_fields["PRODUCT_TYPE"] = data["name"]
+    if "offers" in data and "price" in data["offers"]:
+        extracted_fields["PRICE"] = data["offers"]["price"]
+    if "color" in data:
+        extracted_fields["COLOR"] = data["color"]
+    if "brand" in data and "name" in data["brand"]:
+        extracted_fields["BRAND"] = data["brand"]["name"]
+    
+    return extracted_fields
+
 
 # List of links working 
 all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003', 
@@ -76,6 +95,7 @@ test_input_links = ['https://www.peek-cloppenburg.de/de/stylebop/p/baum-pferdgar
 # Empty list to store the resulting HTML and product info
 output_html = []
 product_info_list = []
+extracted_fields = []
 
 #Create active session to access links with a header 
 s = requests.Session()
@@ -98,16 +118,17 @@ for link in test_input_links:
         output_html.append(None)
         print(f'Other error occurred: {err}')
     else:
-        # Use BeautifulSoup to parse the HTML content
+        # Use BeautifulSoup to parse the HTML content, add to list 
         soup = BeautifulSoup(response.text, 'html.parser')
-
-        product_info = get_product_info(soup)
-
-        # Add the parsed HTML to your output list
         output_html.append(soup.prettify())
 
-        #Add the product info to the list
+        # Extract product info JSON string from the HTML
+        product_info = get_product_info(soup)
         product_info_list.append(product_info)
+
+        # Extract product info fields from the JSON string
+        extracted_fields.append(extract_fields(product_info))
+
 
 # Printing for error checkign 
 for i in range(len(test_input_links)):
@@ -118,3 +139,4 @@ for i in range(len(test_input_links)):
 for i, product_info in enumerate(product_info_list):
     with open(f'output_{i}.json', 'w') as f:
         json.dump(product_info, f)
+        json.dump(extracted_fields[i], f)
