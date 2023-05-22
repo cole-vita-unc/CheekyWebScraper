@@ -1,5 +1,24 @@
 import requests
 from bs4 import BeautifulSoup
+import json
+
+# Function to retrieve the JSON containing the product info from the html of an item page
+def get_product_info(soup):
+    scripts = soup.find_all('script', {'type': 'application/ld+json'})
+
+    for script in scripts:
+        try:
+            data = json.loads(script.string)
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict) and item.get("@type") == "Product":
+                            product_info = item
+                            break
+            elif isinstance(data, dict) and data.get("@type") == "Product":
+                product_info = data
+        except json.JSONDecodeError:
+                continue
+    return product_info
 
 # List of links working 
 all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003', 
@@ -47,15 +66,16 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    'https://www.shopbop.com/scorpian-sunglasses-aire/vp/v=1/1504955196.htm?os=false&breadcrumb=Shop+Women%27s%3EOur+Favorites%3ESummer+%2723+Trend+Edit%3ECool+Shades&folderID=71668&colorSin=2055665417&fm=other-viewall&pf_rd_p=PLACEMENT_ID_PLACEHOLDER&pf_rd_r=IMPRESSION_REQUEST_ID_PLACEHOLDER&ref_=SB_PLP_PDP_W_BOUTI_SUMME_71668_NB_5'
                    ]
 
-
-input_links = ['https://www.peek-cloppenburg.de/de/stylebop/p/baum-pferdgarten-crop-top-mit-allover-logo-hellgruen-1835414', 
+#Input Links for testing 
+test_input_links = ['https://www.peek-cloppenburg.de/de/stylebop/p/baum-pferdgarten-crop-top-mit-allover-logo-hellgruen-1835414', 
                'https://www.neimanmarcus.com/p/alice-olivia-abella-abstract-pleated-puff-sleeve-sweater-prod261700186?icid=NMWS_HP_XXXX_SPXX_ALOVXXXXXXXXXXXX_NAXXXXXX_HPNewArrivals_051223', 
                'https://www.viviennewestwood.com/en/women/clothing/shirts-and-tops/metro-shirt-tinted-indigo-15010059W00HLK415.html', 
                'https://www.alexandermcqueen.com/en-us/ready-to-wear/panelled-trench-coat-727441QFAAA2019.html',
                'https://www.moschino.com/us_en/logo-lettering-python-print-loafers-blue-polma10362c1gmi5709.html']
 
-# Empty list to store the resulting HTML
+# Empty list to store the resulting HTML and product info
 output_html = []
+product_info_list = []
 
 #Create active session to access links with a header 
 s = requests.Session()
@@ -64,7 +84,7 @@ s.headers.update({
 })
 
 
-for link in input_links:
+for link in test_input_links:
     try:
         # Use requests to get the page content
         response = s.get(link)
@@ -81,15 +101,20 @@ for link in input_links:
         # Use BeautifulSoup to parse the HTML content
         soup = BeautifulSoup(response.text, 'html.parser')
 
+        product_info = get_product_info(soup)
+
         # Add the parsed HTML to your output list
         output_html.append(soup.prettify())
 
-# Now input_links[i] corresponds to output_html[i]
-for i in range(len(input_links)):
-    if output_html[i] is None:
-         print(f'HTML content of {input_links[i]} was not retrieved')
-    #else:
-        #print(f'HTML content of {input_links[i]} is stored in output_html[{i}]')
+        #Add the product info to the list
+        product_info_list.append(product_info)
 
-#with open(f'output_1.txt', 'w') as f:
-#            f.write(soup.prettify())
+# Printing for error checkign 
+for i in range(len(test_input_links)):
+    if output_html[i] is None:
+         print(f'HTML content of {test_input_links[i]} was not retrieved')
+
+# Outputting product info to json files
+for i, product_info in enumerate(product_info_list):
+    with open(f'output_{i}.json', 'w') as f:
+        json.dump(product_info, f)
