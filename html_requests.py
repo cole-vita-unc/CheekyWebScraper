@@ -38,7 +38,7 @@ def extract_schema_fields(product_schema):
     if "name" in product_schema:
         extracted_fields["PRODUCT_TYPE"] = product_schema["name"]
     if "offers" in product_schema and "price" in product_schema["offers"]:
-        extracted_fields["PRICE"] = data["offers"]["price"]
+        extracted_fields["PRICE"] = product_schema["offers"]["price"]
 
     # If "color" is not present in the data, search the product description for color keywords
     if "color" in product_schema:
@@ -128,11 +128,19 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    'https://www.moschino.com/us_en/logo-lettering-python-print-loafers-blue-polma10362c1gmi5709.html'
                    ]
 
-#Input Links for testing 
-test_input_links = [ 'https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
-                     'https://www2.hm.com/en_us/productpage.1195139001.html', 
-                     'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content', 
-                     'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1'
+
+#Working Links to test for program regression
+working_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
+                       'https://www2.hm.com/en_us/productpage.1195139001.html',
+                       'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1',
+                       'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content'
+                           ]
+
+#Input Links for te[sting 
+test_input_links = [ 'https://www.target.com/p/women-s-flutter-short-sleeve-dress-universal-thread/-/A-87567817?preselect=87460239#lnk=sametab', 
+                     'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895',
+                     'https://www.nordstrom.com/s/on-running-cloudnova-flux-sneaker-women/7366346?origin=category-personalizedsort&breadcrumb=Home%2FWomen%2FNew%20Arrivals%2FShoes&color=101', 
+                     'https://www.forever21.com/us/2000481077.html?dwvar_2000481077_color=02',
                     ]
 
 
