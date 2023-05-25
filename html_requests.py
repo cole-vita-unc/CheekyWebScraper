@@ -2,34 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+########### FUNCTION DEFINITIONS ############
 
-color_dict = {
-    "Red": ["Tomato", "Maroon", "Crimson"],
-    "Blue": ["SkyBlue", "Navy", "Cobalt"],
-    "Yellow": ["Lemon", "Gold", "Amber"],
-    "Black": ["Onyx", "Charcoal", "Jet"],
-    "White": ["Ivory", "Pearl", "Linen"],
-    "Green": ["Emerald", "Olive", "Jade"],
-    "Purple": ["Lavender", "Violet", "Mauve"],
-    "Orange": ["Pumpkin", "Rustic Orange", "Coral"],
-    "Gray": ["Silver", "Ash", "Pewter"],
-    "Pink": ["Rose", "Blush", "Salmon"],
-    "Brown": ["Chestnut", "Caramel", "Chocolate"],
-    # Add more colors as needed
-}
-
-color_terms = set()
-for base_color, variations in color_dict.items():
-    if base_color:
-        color_terms.add(base_color.lower())
-    for variation in variations:
-        if variation:
-            color_terms.add(variation.lower())
-
-
-# Function to retrieve the JSON string containing the product info from the html of an item page
-def get_product_info(soup):
-    scripts = soup.find_all('script', {'type': 'application/ld+json'})
+# Function to retrieve the JSON string containing the product schema from the html of an item page
+def get_product_schema(item_html):
+    scripts = html.find_all('script', {'type': 'application/ld+json'})
     if len(scripts) == 0:
         return None
     
@@ -50,37 +27,56 @@ def get_product_info(soup):
     return product_info
 
 
-def extract_fields(data):
-    if data is None:
+def extract_schema_fields(product_schema):
+    if product_schema is None:
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
     extracted_fields = {}
 
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
-    if "name" in data:
-        extracted_fields["PRODUCT_TYPE"] = data["name"]
-    if "offers" in data and "price" in data["offers"]:
+    if "name" in product_schema:
+        extracted_fields["PRODUCT_TYPE"] = product_schema["name"]
+    if "offers" in product_schema and "price" in product_schema["offers"]:
         extracted_fields["PRICE"] = data["offers"]["price"]
 
     # If "color" is not present in the data, search the product description for color keywords
-    if "color" in data:
-        extracted_fields["COLOR"] = data["color"]
-    elif ("description" in data) and (data["description"] is not None):
-        product_description = data.get('description', '')
-        description_words = set(product_description.lower().split())
-        color_found = description_words.intersection(color_terms)
-        if color_found:
-            extracted_fields["COLOR"] = color_found.pop()  # Get one color term found
-        else:
-            extracted_fields["COLOR"] = "Not Found"
+    if "color" in product_schema:
+        extracted_fields["COLOR"] = product_schema["color"]
 
-    if "brand" in data and "name" in data["brand"]:
-        extracted_fields["BRAND"] = data["brand"]["name"]
+    if "brand" in product_schema and "name" in product_schema["brand"]:
+        extracted_fields["BRAND"] = product_schema["brand"]["name"]
 
     return extracted_fields
 
 
+#If product schema is not present, extract the product headings from the meta tags
+def extract_from_meta_tags(html):
+    extracted_info = {"BRAND": None, "PRODUCT_NAME": None, "PRICE": None}
+
+    # Get brand
+    brand = html.find("meta", {"property": "og:site_name"})
+    if brand and brand.get("content"):
+        extracted_info["BRAND"] = brand.get("content")
+
+    # Get product name
+    product_name = html.find("meta", {"name": "title"})
+    if not product_name:
+        product_name = html.find("meta", {"property": "og:title"})
+    if product_name and product_name.get("content"):
+        extracted_info["PRODUCT_NAME"] = product_name.get("content")
+
+    # Get price
+    price = html.find("meta", {"name": "twitter:data1"})
+    if price and price.get("content"):
+        extracted_info["PRICE"] = price.get("content")
+
+    return extracted_info
+
+
+
+
+########### LOCAL ARRAYS ############
 
 # List of links working 
 all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003', 
@@ -119,7 +115,6 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    'https://www.anthropologie.com/shop/suboo-frida-plunge-maxi-dress?category=resort-wear&color=266&type=STANDARD&quantity=1', 
                    'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895', 
                    'https://www.bershka.com/us/elastic-denim-jumpsuit-with-cut-out-back-c0p137699688.html?colorId=800&stylismId=2', 
-                   'https://www.express.com/clothing/women/satin-crew-neck-gramercy-tee/pro/08628854/color/Pecan/',
                    'https://www.farmrio.com/products/beach-toucans-scarf-lenzing-ecovero-viscose-kimono',
                    'https://www.journelle.com/products/onl-10011-wild-rose-print?variant=42339167764659', 
                    'https://www.yandy.com/products/naughty-nights-tube-chemise-set', 
@@ -134,16 +129,21 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    ]
 
 #Input Links for testing 
-test_input_links = ['https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content', 
-                   'https://www.nordstrom.com/s/on-running-cloudnova-flux-sneaker-women/7366346?origin=category-personalizedsort&breadcrumb=Home%2FWomen%2FNew%20Arrivals%2FShoes&color=101',
-                   'https://www.jcpenney.com/p/worthington-womens-v-neck-elbow-sleeve-pullover-sweater/ppr5008328887?pTmplType=regular&deptId=dept20000013&catId=cat100210007&urlState=%2Fg%2Fwomen%2Fsweaters-cardigans%3Fid%3Dcat100210007&productGridView=medium&badge=new%7Cpetite&cm_re=ZI-_-DEPARTMENT-WOMEN-_-VN-_-CATEGORY-_-SWEATERS_4',
-                   'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895',
-                   'https://www.fashionnova.com/products/oceanside-affair-1-piece-bikini-jade']
+test_input_links = [ 'https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
+                     'https://www2.hm.com/en_us/productpage.1195139001.html', 
+                     'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content', 
+                     'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1'
+                    ]
+
 
 # Empty list to store the resulting HTML and product info
 output_html = []
 product_info_list = []
 extracted_fields = []
+
+
+
+########### SESSION CREATION AND FUNCTION CALLS ############
 
 #Create active session to access links with a header 
 s = requests.Session()
@@ -166,25 +166,38 @@ for link in test_input_links:
         output_html.append(None)
         print(f'Other error occurred: {err}')
     else:
+
         # Use BeautifulSoup to parse the HTML content, add to list 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        output_html.append(soup.prettify())
+        html = BeautifulSoup(response.text, 'html.parser')
+        output_html.append(html.prettify())
 
         # Extract product info JSON string from the HTML
-        product_info = get_product_info(soup)
+        if((product_info := get_product_schema(html)) is not None):
+            extracted_fields.append(extract_schema_fields(product_info))
+        else:
+            extracted_fields.append(None)
+    
         product_info_list.append(product_info)
 
-        # Extract product info fields from the JSON string
-        extracted_fields.append(extract_fields(product_info))
 
+
+
+########### PROGRAM OUTPUT ############
 
 # Printing for error checking
 for i in range(len(test_input_links)):
     if output_html[i] is None:
          print(f'HTML content of {test_input_links[i]} was not retrieved')
+    if product_info_list[i] is None:
+         print(f'Product info of {test_input_links[i]} was not retrieved')
 
 # Outputting product info to json files
 for i, product_info in enumerate(product_info_list):
     with open(f'output_{i}.json', 'w') as f:
         #json.dump(product_info, f)
         json.dump(extracted_fields[i], f)
+
+# Outputting HTML to text files
+for i, html in enumerate(output_html):
+    with open(f'output_{i}.txt', 'w') as f:
+        f.write(html)
