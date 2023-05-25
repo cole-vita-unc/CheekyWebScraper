@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium_stealth import stealth
+import time
 
 ########### FUNCTION DEFINITIONS ############
 
@@ -153,30 +158,34 @@ extracted_fields = []
 
 ########### SESSION CREATION AND FUNCTION CALLS ############
 
-#Create active session to access links with a header 
-s = requests.Session()
-s.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-})
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Run in headless mode
+chrome_options.add_argument("--disable-images")  # Disable images
+chrome_options.add_argument("start-maximized")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option('useAutomationExtension', False)
 
 
+s = Service('Users/user/Downloads/chromedriver_mac64')  # Replace with your actual path
+driver = webdriver.Chrome(service=s, options=chrome_options)
+
+stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+        )
+
+# Loop through all links and get the HTML content
 for link in test_input_links:
     try:
-        # Use requests to get the page content
-        response = s.get(link)
-        
-        # Check if request was successful
-        response.raise_for_status()
-    except requests.HTTPError as http_err:
-        output_html.append(None)
-        print(f'HTTP error occurred: {http_err}')  
-    except Exception as err:
-        output_html.append(None)
-        print(f'Other error occurred: {err}')
-    else:
+        # Navigate to the page
+        driver.get(link)
 
-        # Use BeautifulSoup to parse the HTML content, add to list 
-        html = BeautifulSoup(response.text, 'html.parser')
+        # Get the page source and parse it using BeautifulSoup
+        html = BeautifulSoup(driver.page_source, 'html.parser')
         output_html.append(html.prettify())
 
         # Extract product info JSON string from the HTML
@@ -187,6 +196,12 @@ for link in test_input_links:
     
         product_info_list.append(product_info)
 
+    except Exception as e:
+        output_html.append(None)
+        print('An error occurred: ', e)
+
+# Quit the webdriver when done
+driver.quit()
 
 
 
