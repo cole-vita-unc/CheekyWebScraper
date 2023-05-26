@@ -5,13 +5,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
-import time
+from openai_nlp import *
 
 ########### FUNCTION DEFINITIONS ############
 
 # Function to retrieve the JSON string containing the product schema from the html of an item page
 def get_product_schema(item_html):
-    scripts = html.find_all('script', {'type': 'application/ld+json'})
+    scripts = item_html.find_all('script', {'type': 'application/ld+json'})
     if len(scripts) == 0:
         return None
     
@@ -37,20 +37,23 @@ def extract_schema_fields(product_schema):
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
-    extracted_fields = {}
+    extracted_fields = {"TITLE": None, "BRAND": None, "PRICE": None, "COLOR": None, "Gender": None}
 
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in product_schema:
-        extracted_fields["PRODUCT_TYPE"] = product_schema["name"]
+        extracted_fields["TITLE"] = product_schema["name"]
+
     if "offers" in product_schema and "price" in product_schema["offers"]:
         extracted_fields["PRICE"] = product_schema["offers"]["price"]
 
-    # If "color" is not present in the data, search the product description for color keywords
-    if "color" in product_schema:
-        extracted_fields["COLOR"] = product_schema["color"]
-
     if "brand" in product_schema and "name" in product_schema["brand"]:
         extracted_fields["BRAND"] = product_schema["brand"]["name"]
+
+    if "color" in product_schema:
+        extracted_fields["COLOR"] = product_schema["color"]
+    
+    if "gender" in product_schema:
+        extracted_fields["GENDER"] = product_schema["gender"]
 
     return extracted_fields
 
@@ -58,7 +61,7 @@ def extract_schema_fields(product_schema):
 #If product schema is not present, extract the product headings from the meta tags
 def extract_from_tags(html):
 
-    extracted_info = {"TITLE": None, "BRAND": None, "PRICE": None}
+    extracted_info = {"TITLE": None, "BRAND": None, "PRICE": None, "COLOR": None, "Gender": None}
 
     # Get product title
     product_name = html.find("meta", {"name": "title"})
@@ -85,6 +88,14 @@ def extract_from_tags(html):
     else:
         if price := html.find("span", {"class": "product-price"}):
             extracted_info["PRICE"] = price.text
+
+    # Get color
+    if color := html.find("span", {"class": "product-color"}):
+        extracted_info["COLOR"] = color.text
+    
+    # Get gender
+    if gender := html.find("span", {"class": "product-gender"}):
+        extracted_info["GENDER"] = gender.text
 
     return extracted_info
 
@@ -143,17 +154,17 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
 
 
 #Working Links to test for program regression
-working_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
+test_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
                        'https://www2.hm.com/en_us/productpage.1195139001.html',
                        'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1',
                        'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content'
                            ]
 
 #Input Links for te[sting 
-test_input_links = [ 'https://www.target.com/p/women-s-flutter-short-sleeve-dress-universal-thread/-/A-87567817?preselect=87460239#lnk=sametab', 
-                     'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895',
-                     'https://www.nordstrom.com/s/on-running-cloudnova-flux-sneaker-women/7366346?origin=category-personalizedsort&breadcrumb=Home%2FWomen%2FNew%20Arrivals%2FShoes&color=101', 
-                     'https://www.forever21.com/us/2000481077.html?dwvar_2000481077_color=02',
+testEDITED_input_links = [ 'https://fearofgod.com/collections/essentials/products/sp23-ss-sweatshirt-off-black', 
+                     'https://www.amazon.com/Attract-Trilogy-RND-CZWH-RHS/dp/B07DPRW46T/ref=lp_63337800011_1_1?th=1', 
+                     'https://www.ajio.com/baggit-colourblock-sling-bag-with-adjustable-strap/p/4932381350_multi', 
+                     'https://www.everlane.com/products/womens-organic-pulll-on-short-sandstone?collection=womens-bestsellersv2', 
                     ]
 
 
@@ -199,14 +210,16 @@ for link in test_input_links:
         # Extract product info JSON string from the HTML
         if((product_info := get_product_schema(html)) is not None):
             extracted_fields.append(extract_schema_fields(product_info))
+            product_info_list.append(product_info) #For Testing
+
         else:
             if((product_info := extract_from_tags(html)) is not None):
                 extracted_fields.append(product_info)
+                product_info_list.append(product_info) # For Testing
+
             else:
                 extracted_fields.append(None)
-
-    
-        product_info_list.append(product_info)
+                product_info_list.append(None) # For Testing
 
     except Exception as e:
         output_html.append(None)
@@ -235,3 +248,4 @@ for i, product_info in enumerate(product_info_list):
 for i, html in enumerate(output_html):
     with open(f'output_{i}.txt', 'w') as f:
         f.write(html)
+
