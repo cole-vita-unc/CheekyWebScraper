@@ -56,29 +56,37 @@ def extract_schema_fields(product_schema):
 
 
 #If product schema is not present, extract the product headings from the meta tags
-def extract_from_meta_tags(html):
-    extracted_info = {"BRAND": None, "PRODUCT_NAME": None, "PRICE": None}
+def extract_from_tags(html):
 
-    # Get brand
-    brand = html.find("meta", {"property": "og:site_name"})
-    if brand and brand.get("content"):
-        extracted_info["BRAND"] = brand.get("content")
+    extracted_info = {"TITLE": None, "BRAND": None, "PRICE": None}
 
-    # Get product name
+    # Get product title
     product_name = html.find("meta", {"name": "title"})
     if not product_name:
         product_name = html.find("meta", {"property": "og:title"})
     if product_name and product_name.get("content"):
-        extracted_info["PRODUCT_NAME"] = product_name.get("content")
+        extracted_info["TITLE"] = product_name.get("content")
+    else:
+        if title:= html.find("title"):
+            extracted_info["TITLE"] = title.text
+
+    # Get brand                                                                     #TODO: Add more brand and price cases for other websites
+    brand = html.find("meta", {"property": "og:site_name"})
+    if brand and brand.get("content"):
+        extracted_info["BRAND"] = brand.get("content")
+    else:
+        if brand := html.find("div", {"class": "brand-name"}):
+            extracted_info["BRAND"] = brand.text
 
     # Get price
     price = html.find("meta", {"name": "twitter:data1"})
     if price and price.get("content"):
         extracted_info["PRICE"] = price.get("content")
+    else:
+        if price := html.find("span", {"class": "product-price"}):
+            extracted_info["PRICE"] = price.text
 
     return extracted_info
-
-
 
 
 ########### LOCAL ARRAYS ############
@@ -192,7 +200,11 @@ for link in test_input_links:
         if((product_info := get_product_schema(html)) is not None):
             extracted_fields.append(extract_schema_fields(product_info))
         else:
-            extracted_fields.append(None)
+            if((product_info := extract_from_tags(html)) is not None):
+                extracted_fields.append(product_info)
+            else:
+                extracted_fields.append(None)
+
     
         product_info_list.append(product_info)
 
@@ -202,7 +214,6 @@ for link in test_input_links:
 
 # Quit the webdriver when done
 driver.quit()
-
 
 
 ########### PROGRAM OUTPUT ############
