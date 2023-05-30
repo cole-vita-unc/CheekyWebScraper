@@ -231,7 +231,6 @@ for link in test_input_links:
                 extracted_fields.append(None)
                 product_info_list.append(None) # For Testing
 
-
     except Exception as e:
         output_html.append(None)
         print('An error occurred: ', e)
@@ -249,8 +248,14 @@ for i in range(len(test_input_links)):
     if product_info_list[i] is None:
          print(f'Product info of {test_input_links[i]} was not retrieved')
 
+# Updating extracted fields with NLP parser results
+for i, extracted_field in enumerate(extracted_fields):
+    if extracted_field is not None:
+        string_response = nlpOutput(extracted_field)
+        extracted_fields[i] = parseOutput(extracted_field, string_response)
+
 # Outputting product info to json files
-for i, product_info in enumerate(product_info_list):
+for i, extracted_field in enumerate(extracted_fields):
     with open(f'output_{i}.json', 'w') as f:
         #json.dump(product_info, f)
         json.dump(extracted_fields[i], f)
@@ -259,4 +264,6 @@ for i, product_info in enumerate(product_info_list):
 for i, html in enumerate(output_html):
     with open(f'output_{i}.txt', 'w') as f:
         f.write(html)
+
+# Updating extracted fields with NLP parser results
 
