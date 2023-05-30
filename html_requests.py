@@ -37,23 +37,33 @@ def extract_schema_fields(product_schema):
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
-    extracted_fields = {"TITLE": None, "BRAND": None, "PRICE": None, "COLOR": None, "Gender": None}
+    extracted_fields = {"TITLE": None, "BRAND": None, "Type": None, "PRICE": None, "COLOR": None, "Gender": None}
 
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in product_schema:
         extracted_fields["TITLE"] = product_schema["name"]
+    else:
+        extracted_fields["TITLE"] = None
 
     if "offers" in product_schema and "price" in product_schema["offers"]:
         extracted_fields["PRICE"] = product_schema["offers"]["price"]
+    else:
+        extracted_fields["PRICE"] = None
 
     if "brand" in product_schema and "name" in product_schema["brand"]:
         extracted_fields["BRAND"] = product_schema["brand"]["name"]
+    else:
+        extracted_fields["BRAND"] = None
 
     if "color" in product_schema:
         extracted_fields["COLOR"] = product_schema["color"]
+    else:
+        extracted_fields["COLOR"] = None
     
     if "gender" in product_schema:
         extracted_fields["GENDER"] = product_schema["gender"]
+    else:
+        extracted_fields["GENDER"] = None
 
     return extracted_fields
 
@@ -61,7 +71,7 @@ def extract_schema_fields(product_schema):
 #If product schema is not present, extract the product headings from the meta tags
 def extract_from_tags(html):
 
-    extracted_info = {"TITLE": None, "BRAND": None, "PRICE": None, "COLOR": None, "Gender": None}
+    extracted_info = {"TITLE": None, "BRAND": None,"Type": None, "PRICE": None, "COLOR": None, "Gender": None}
 
     # Get product title
     product_name = html.find("meta", {"name": "title"})
@@ -220,6 +230,7 @@ for link in test_input_links:
             else:
                 extracted_fields.append(None)
                 product_info_list.append(None) # For Testing
+
 
     except Exception as e:
         output_html.append(None)

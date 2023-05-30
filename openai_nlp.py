@@ -2,10 +2,14 @@
 #script (e.g. .bashrc, zshrc, etc.) or running it in the command line before the fine-tuning command:
     #export OPENAI_API_KEY="<OPENAI_API_KEY>"
 import openai
+import json
 
 def nlpOutput(extracted_fields):
 
     product_title = extracted_fields['TITLE']
+
+    if product_title is None:
+        return 'No product title found'
 
     prompt = f"""
     I am an AI model trained to identify details about a product from a given description. Here are a few examples:
@@ -63,8 +67,11 @@ def parseOutput(extracted_info, string_response):
         if ' - ' in line:
             key, value = [item.strip() for item in line.split(' - ')]
             key = key.upper()  # Make key uppercase to match dictionary keys
-            if extracted_info[key] is None and value != 'Not Specified':
-                extracted_info[key] = value
-                keys_updated += 1
+            # Check for the key in the dictionary in a case-insensitive manner
+            for info_key in extracted_info:
+                if info_key.upper() == key and extracted_info[info_key] is None and value != 'Not specified':
+                    extracted_info[info_key] = value
+                    keys_updated += 1
+                    break
     print(f'Updated {keys_updated} keys')
     return extracted_info
