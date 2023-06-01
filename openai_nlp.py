@@ -2,7 +2,15 @@
 #script (e.g. .bashrc, zshrc, etc.) or running it in the command line before the fine-tuning command:
     #export OPENAI_API_KEY="<OPENAI_API_KEY>"
 import openai
-import json
+
+def updateWithNLP(extracted_info):
+    # Generate NLP output
+    string_response = nlpOutput(extracted_info)
+
+    # Parse and update extracted info
+    updated_info = parseOutput(extracted_info, string_response)
+
+    return updated_info
 
 def nlpOutput(extracted_fields):
 
@@ -57,8 +65,6 @@ def nlpOutput(extracted_fields):
     max_tokens=100
     )
     return response.choices[0].text.strip()
-    
-#TODO: Consolidate these two functions
 
 def parseOutput(extracted_info, string_response):
     keys_updated = 0

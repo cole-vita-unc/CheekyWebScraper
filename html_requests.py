@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
-from openai_nlp import *
+from openai_nlp import updateWithNLP
 
 ########### FUNCTION DEFINITIONS ############
 
@@ -37,7 +37,7 @@ def extract_schema_fields(product_schema):
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
-    extracted_fields = {"TITLE": None, "BRAND": None, "Type": None, "PRICE": None, "COLOR": None, "Gender": None}
+    extracted_fields = {"TITLE": None, "BRAND": None, "Type": None, "PRICE": None, "COLOR": None, "GENDER": None}
 
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in product_schema:
@@ -71,7 +71,7 @@ def extract_schema_fields(product_schema):
 #If product schema is not present, extract the product headings from the meta tags
 def extract_from_tags(html):
 
-    extracted_info = {"TITLE": None, "BRAND": None,"Type": None, "PRICE": None, "COLOR": None, "Gender": None}
+    extracted_info = {"TITLE": None, "BRAND": None,"Type": None, "PRICE": None, "COLOR": None, "GENDER": None}
 
     # Get product title
     product_name = html.find("meta", {"name": "title"})
@@ -164,17 +164,17 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
 
 
 #Working Links to test for program regression
-test_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
+working_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
                        'https://www2.hm.com/en_us/productpage.1195139001.html',
                        'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1',
                        'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content'
                            ]
 
 #Input Links for te[sting 
-testEDITED_input_links = [ 'https://fearofgod.com/collections/essentials/products/sp23-ss-sweatshirt-off-black', 
-                     'https://www.amazon.com/Attract-Trilogy-RND-CZWH-RHS/dp/B07DPRW46T/ref=lp_63337800011_1_1?th=1', 
-                     'https://www.ajio.com/baggit-colourblock-sling-bag-with-adjustable-strap/p/4932381350_multi', 
-                     'https://www.everlane.com/products/womens-organic-pulll-on-short-sandstone?collection=womens-bestsellersv2', 
+test_input_links = [ 'https://www.etsy.com/listing/1097017861/personalized-name-necklace-gift-for-her?click_key=d7f18159fa6f923fa71cbe555281b2dae335bc31%3A1097017861&click_sum=f2c6ff6b&ref=hp_prn-3&pro=1&frs=1&sts=1', 
+                     'https://poshmark.com/listing/NIKE-Air-Force-1-Low-LV8-1Womens-75-CW0984100-644e8a86943ddbaf5263ddf4', 
+                     'https://www.macys.com/shop/product/jones-new-york-womens-short-sleeve-button-detail-top?ID=15955236&CategoryID=255&swatchColor=Bright%20Orchid%20Purple',
+                     'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
                     ]
 
 
@@ -251,8 +251,7 @@ for i in range(len(test_input_links)):
 # Updating extracted fields with NLP parser results
 for i, extracted_field in enumerate(extracted_fields):
     if extracted_field is not None:
-        string_response = nlpOutput(extracted_field)
-        extracted_fields[i] = parseOutput(extracted_field, string_response)
+        extracted_fields[i] = updateWithNLP(extracted_field)
 
 # Outputting product info to json files
 for i, extracted_field in enumerate(extracted_fields):
