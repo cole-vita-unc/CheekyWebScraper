@@ -4,7 +4,7 @@
 
 This project is a web scraping tool designed to extract product information from web pages in a structured format. It aims to fetch detailed product information like product name, brand, price, color, and gender from a given webpage using Python.
 
-The primary goal of this tool is to leverage the structured data present in the form of JSON-LD scripts and HTML tags on the webpage. If the JSON-LD format is present, it will try to extract the product schema from it; otherwise, it resorts to the extraction from HTML tags.
+The goal of this tool is to leverage the structured data present in the form of JSON-LD scripts and HTML tags on the webpage. If the JSON-LD format is present, it will try to extract the product schema from it; otherwise, it resorts to the extraction from HTML tags.
 
 The tool makes use of Selenium with the Chrome WebDriver for web scraping and BeautifulSoup for parsing the HTML content.
 
