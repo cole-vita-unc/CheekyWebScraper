@@ -45,7 +45,7 @@ More cases can also be added to the current attribute retrieval methods by exami
 
 - Fine tune an NLP designed for attribute detection 
 
-There are costs associated with using GPT3 which may be large when the program is scaled to millions of items. Fine tuning an NLP with no associated costs would help bring down the price.
+There are costs associated with using GPT3 which may be large when the program is scaled to millions of items. Fine tuning an NLP with no associated costs would help bring down the price. This can be done with open-source, tunable NLPs such as spaCy or by fine tuning an OpenAI model.
 
 - Use an NLP to determine the category of clothing
 
