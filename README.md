@@ -20,7 +20,7 @@ Make sure to replace <OPENAI_API_KEY> with your actual OpenAI API key.
 
 ## Current Success Rates 
 Out of 55 tested websites, the program succesfully captured the HTML of 52 of them (92.7%). 
-For the 51 websites where the HTML was recovered, the program retrieved the following attributes expressed as a percent: 
+For the 52 websites where the HTML was recovered, the program retrieved the following attributes expressed as a percent: 
 
 - Product Title: 100% 
 - Product Brand: 94.1%
