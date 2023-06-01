@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 import json
 from selenium import webdriver
@@ -6,13 +5,22 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
 from openai_nlp import updateWithNLP
+import logging
 
 ########### FUNCTION DEFINITIONS ############
 
 # Function to retrieve the JSON string containing the product schema from the html of an item page
-def get_product_schema(item_html):
+def getProductSchema(item_html):
+    """
+    This function extracts product information from HTML code in JSON-LD format.
+    
+    :param item_html: It is a string containing the HTML code of a webpage that contains information
+    about a product
+    :return: a dictionary containing information about a product, extracted from the input HTML using
+    the schema.org markup format. If no such information is found, the function returns None.
+    """
     scripts = item_html.find_all('script', {'type': 'application/ld+json'})
-    if len(scripts) == 0:
+    if scripts is None or len(scripts) == 0:
         return None
     
     product_info = None
@@ -32,8 +40,18 @@ def get_product_schema(item_html):
     return product_info
 
 
-def extract_schema_fields(product_schema):
+def extractSchemaFields(product_schema):
+    """
+    The function extracts specific fields from a product schema dictionary and returns them in a new
+    dictionary.
+    
+    :param product_schema: The input parameter is a dictionary representing a product schema, which
+    contains information about a product such as its name, brand, price, color, and gender
+    :return: a dictionary containing the extracted fields from the input product schema. If the input
+    product schema is None, the function returns None and logs a warning message.
+    """
     if product_schema is None:
+        logging.warning('Invalid or empty product schema.')
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
@@ -42,70 +60,53 @@ def extract_schema_fields(product_schema):
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in product_schema:
         extracted_fields["TITLE"] = product_schema["name"]
-    else:
-        extracted_fields["TITLE"] = None
-
+    
     if "offers" in product_schema and "price" in product_schema["offers"]:
         extracted_fields["PRICE"] = product_schema["offers"]["price"]
-    else:
-        extracted_fields["PRICE"] = None
 
     if "brand" in product_schema and "name" in product_schema["brand"]:
         extracted_fields["BRAND"] = product_schema["brand"]["name"]
-    else:
-        extracted_fields["BRAND"] = None
 
     if "color" in product_schema:
         extracted_fields["COLOR"] = product_schema["color"]
-    else:
-        extracted_fields["COLOR"] = None
     
     if "gender" in product_schema:
         extracted_fields["GENDER"] = product_schema["gender"]
-    else:
-        extracted_fields["GENDER"] = None
 
     return extracted_fields
 
 
 #If product schema is not present, extract the product headings from the meta tags
-def extract_from_tags(html):
+def extractFromTags(html):
+    """
+    The function extracts product attributes from HTML tags and returns it in a dictionary format.
+    
+    :param html: The HTML code of a webpage that contains information about a product
+    :return: a dictionary containing information extracted from the input HTML. The dictionary has keys
+    for "TITLE", "BRAND", "PRICE", "COLOR", "GENDER", and "Type". The values for these keys are
+    extracted from the HTML using various methods such as finding specific HTML tags or attributes. If
+    any of the information cannot be extracted, the corresponding value in the dictionary will be None
+    """
+    if html is None:
+        logging.warning('Invalid or empty HTML.')
+        return None
 
     extracted_info = {"TITLE": None, "BRAND": None,"Type": None, "PRICE": None, "COLOR": None, "GENDER": None}
 
-    # Get product title
-    product_name = html.find("meta", {"name": "title"})
-    if not product_name:
-        product_name = html.find("meta", {"property": "og:title"})
-    if product_name and product_name.get("content"):
-        extracted_info["TITLE"] = product_name.get("content")
-    else:
-        if title:= html.find("title"):
-            extracted_info["TITLE"] = title.text
+    product_name = html.find("meta", {"name": "title"}) or html.find("meta", {"property": "og:title"})
+    extracted_info["TITLE"] = product_name.get("content") if product_name else html.find("title").text
 
-    # Get brand                                                                     #TODO: Add more brand and price cases for other websites
-    brand = html.find("meta", {"property": "og:site_name"})
-    if brand and brand.get("content"):
-        extracted_info["BRAND"] = brand.get("content")
-    else:
-        if brand := html.find("div", {"class": "brand-name"}):
-            extracted_info["BRAND"] = brand.text
+    brand = html.find("meta", {"property": "og:site_name"}) or html.find("div", {"class": "brand-name"})
+    extracted_info["BRAND"] = brand.get("content") if brand else None
 
-    # Get price
-    price = html.find("meta", {"name": "twitter:data1"})
-    if price and price.get("content"):
-        extracted_info["PRICE"] = price.get("content")
-    else:
-        if price := html.find("span", {"class": "product-price"}):
-            extracted_info["PRICE"] = price.text
+    price = html.find("meta", {"name": "twitter:data1"}) or html.find("span", {"class": "product-price"})
+    extracted_info["PRICE"] = price.get("content") if price else None
 
-    # Get color
-    if color := html.find("span", {"class": "product-color"}):
-        extracted_info["COLOR"] = color.text
-    
-    # Get gender
-    if gender := html.find("span", {"class": "product-gender"}):
-        extracted_info["GENDER"] = gender.text
+    color = html.find("span", {"class": "product-color"})
+    extracted_info["COLOR"] = color.text if color else None
+
+    gender = html.find("span", {"class": "product-gender"})
+    extracted_info["GENDER"] = gender.text if gender else None
 
     return extracted_info
 
@@ -160,21 +161,28 @@ all_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc
                    'https://www.viviennewestwood.com/en/women/clothing/shirts-and-tops/metro-shirt-tinted-indigo-15010059W00HLK415.html', 
                    'https://www.alexandermcqueen.com/en-us/ready-to-wear/panelled-trench-coat-727441QFAAA2019.html',
                    'https://www.moschino.com/us_en/logo-lettering-python-print-loafers-blue-polma10362c1gmi5709.html'
+                   'https://www.adidas.com/us/ultraboost-light-running-shoes/GY9352.html', 
+                   'https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
+                   'https://www.zara.com/us/en/convertible-crop-jacket-p04661815.html?v1=272715073&v2=2184220', 
+                   'https://www.lulus.com/products/show-stopper-cream-embroidered-sequin-bodycon-midi-dress/856342.html',
+                   'https://www.madewell.com/on/demandware.store/Sites-madewellUS-Site/en_US/Product-Multisell?externalProductCodes=NK023,NK842,NH399,NL556'
+                   'https://www.macys.com/shop/product/levis-womens-726-high-rise-flare-jeans?ID=14231961&CategoryID=51475'
+                   'https://www.express.com/clothing/women/stylist-super-high-waisted-pleated-pull-on-shorts/pro/03016256/color/RUM%20RAISIN/',
+                   'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
                    ]
 
 
 #Working Links to test for program regression
-working_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
+working_input_links = [  'https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003',
                        'https://www2.hm.com/en_us/productpage.1195139001.html',
                        'https://www.urbanoutfitters.com/shop/urban-renewal-made-in-la-eco-linen-maxi-skirt?category=skirts&color=030&type=REGULAR&quantity=1',
                        'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content'
-                           ]
+                    ]
 
 #Input Links for te[sting 
-test_input_links = [ 'https://www.etsy.com/listing/1097017861/personalized-name-necklace-gift-for-her?click_key=d7f18159fa6f923fa71cbe555281b2dae335bc31%3A1097017861&click_sum=f2c6ff6b&ref=hp_prn-3&pro=1&frs=1&sts=1', 
-                     'https://poshmark.com/listing/NIKE-Air-Force-1-Low-LV8-1Womens-75-CW0984100-644e8a86943ddbaf5263ddf4', 
-                     'https://www.macys.com/shop/product/jones-new-york-womens-short-sleeve-button-detail-top?ID=15955236&CategoryID=255&swatchColor=Bright%20Orchid%20Purple',
-                     'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
+test_input_links = [  'https://www.pacsun.com/pacsun/medium-blue-90s-baggy-cargo-jeans-0850436750275.html?tileCgid=womens',
+                   'https://www.adidas.com/us/ultraboost-light-running-shoes/GY9352.html', 
+                   'https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
                     ]
 
 
@@ -218,12 +226,12 @@ for link in test_input_links:
         output_html.append(html.prettify())
 
         # Extract product info JSON string from the HTML
-        if((product_info := get_product_schema(html)) is not None):
-            extracted_fields.append(extract_schema_fields(product_info))
+        if((product_info := getProductSchema(html)) is not None):
+            extracted_fields.append(extractSchemaFields(product_info))
             product_info_list.append(product_info) #For Testing
 
         else:
-            if((product_info := extract_from_tags(html)) is not None):
+            if((product_info := extractFromTags(html)) is not None):
                 extracted_fields.append(product_info)
                 product_info_list.append(product_info) # For Testing
 
@@ -259,10 +267,8 @@ for i, extracted_field in enumerate(extracted_fields):
         #json.dump(product_info, f)
         json.dump(extracted_fields[i], f)
 
-# Outputting HTML to text files
-for i, html in enumerate(output_html):
-    with open(f'output_{i}.txt', 'w') as f:
-        f.write(html)
-
-# Updating extracted fields with NLP parser results
+# # Outputting HTML to text files
+# for i, html in enumerate(output_html):
+#     with open(f'output_{i}.txt', 'w') as f:
+#         f.write(html)
 
