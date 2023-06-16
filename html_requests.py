@@ -93,8 +93,12 @@ def extractFromTags(html):
     brand = html.find("meta", {"property": "og:site_name"}) or html.find("div", {"class": "brand-name"})
     extracted_info["BRAND"] = brand.get("content") if brand else None
 
-    price = html.find("meta", {"name": "twitter:data1"}) or html.find("span", {"class": "product-price"})
-    extracted_info["PRICE"] = price.get("content") if price else None
+    price = html.find("meta", {"name": "twitter:data1"}) 
+    if price is None:
+        price = html.find(lambda tag: tag.name in ['div', 'span'] and 
+                        'product-price' in tag.get('class', ''))
+    extracted_info["PRICE"] = price.get("content") if price and price.name == 'meta' else price.text.strip() if price else None
+
 
     color = html.find("span", {"class": "product-color"})
     extracted_info["COLOR"] = color.text if color else None
