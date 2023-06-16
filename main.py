@@ -8,18 +8,13 @@ from price_parser import extractPriceWithJS
 from html_requests import *
 
 # Current testing links 
-test_input_links = ['https://www.nike.com/t/blazer-mid-pro-club-mens-shoes-Vgslvc/DQ7673-003', 
-                   'https://www2.hm.com/en_us/productpage.1195139001.html', 
-                   'https://fearofgod.com/collections/essentials/products/sp23-ss-sweatshirt-off-black', 
-                   'https://www.etsy.com/listing/1097017861/personalized-name-necklace-gift-for-her?click_key=d7f18159fa6f923fa71cbe555281b2dae335bc31%3A1097017861&click_sum=f2c6ff6b&ref=hp_prn-3&pro=1&frs=1&sts=1', 
-                   'https://poshmark.com/listing/Armani-collezioni-mens-black-gray-pinstripe-suit-jacket-made-in-Italy-size-42-6469a806db3a6f694f7ce07d', 
-                   'https://www.amazon.com/Attract-Trilogy-RND-CZWH-RHS/dp/B07DPRW46T/ref=lp_63337800011_1_1?th=1', 
-                   'https://www.asos.com/us/new-look/new-look-raglan-sleeve-crew-neck-sweatshirt-in-navy/prd/204190939?clr=navy&colourWayId=204190940&cid=27110', 
-                   'https://www.macys.com/shop/product/jones-new-york-womens-short-sleeve-button-detail-top?ID=15955236&CategoryID=255&swatchColor=Bright%20Orchid%20Purple',
-                   'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003', 
-                   'https://www.gap.com/browse/product.do?pid=665485012&cid=8792&pcid=8792&vid=1#pdp-page-content', 
-                   'https://www.nordstrom.com/s/on-running-cloudnova-flux-sneaker-women/7366346?origin=category-personalizedsort&breadcrumb=Home%2FWomen%2FNew%20Arrivals%2FShoes&color=101',
-                   'https://www.jcpenney.com/p/worthington-womens-v-neck-elbow-sleeve-pullover-sweater/ppr5008328887?pTmplType=regular&deptId=dept20000013&catId=cat100210007&urlState=%2Fg%2Fwomen%2Fsweaters-cardigans%3Fid%3Dcat100210007&productGridView=medium&badge=new%7Cpetite&cm_re=ZI-_-DEPARTMENT-WOMEN-_-VN-_-CATEGORY-_-SWEATERS_4'
+test_input_links = ['https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
+                   'https://www.zara.com/us/en/convertible-crop-jacket-p04661815.html?v1=272715073&v2=2184220', 
+                   'https://www.lulus.com/products/show-stopper-cream-embroidered-sequin-bodycon-midi-dress/856342.html',
+                   'https://www.madewell.com/on/demandware.store/Sites-madewellUS-Site/en_US/Product-Multisell?externalProductCodes=NK023,NK842,NH399,NL556'
+                   'https://www.macys.com/shop/product/levis-womens-726-high-rise-flare-jeans?ID=14231961&CategoryID=51475'
+                   'https://www.express.com/clothing/women/stylist-super-high-waisted-pleated-pull-on-shorts/pro/03016256/color/RUM%20RAISIN/',
+                   'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
                     ]
 
 
@@ -64,10 +59,10 @@ for link in test_input_links:
 
         extracted_fields = extractFromTags(html)
 
-        if extracted_fields["PRICE"] is None:
+        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
             extracted_fields["PRICE"] = extractPriceWithJS(driver)
 
-        if extracted_fields["PRICE"] is None:
+        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
             if((product_info := getProductSchema(html)) is not None):
                 extracted_fields.update(extractSchemaFields(product_info))
 
