@@ -6,6 +6,7 @@ from selenium_stealth import stealth
 from openai_nlp import updateWithNLP
 from price_parser import extractPriceWithJS
 from html_requests import *
+from image_extract import *
 
 # Current testing links 
 test_input_links = ['https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
@@ -55,6 +56,14 @@ for link in test_input_links:
         # Get the page source and parse it using BeautifulSoup
         html = BeautifulSoup(driver.page_source, 'html.parser')
 
+
+### IMAGE TESTING ###
+
+
+
+
+#### PRICE EXTRACTION ####
+
         extracted_fields["PRICE"] = None
 
         extracted_fields = extractFromTags(html)
@@ -71,6 +80,7 @@ for link in test_input_links:
 
         print(extracted_fields["PRICE"])
         
+### ITEM INFO TESTING 
 
         # output_html.append(html.prettify())
 
