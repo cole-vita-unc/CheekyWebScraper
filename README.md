@@ -25,7 +25,7 @@ For the 52 websites where the HTML was recovered, the program retrieved the foll
 - Product Title: 100% 
 - Product Brand: 94.1%
 - Product Type: 100%
-- Product Price: 43.1%
+- Product Price: 76.4%
 - Product Color: 35.2% 
 - Product Gender: 66.7%
 
