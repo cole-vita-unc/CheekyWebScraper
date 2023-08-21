@@ -1,4 +1,5 @@
 import json 
+import requests
 
 def extract_image_url(html_content):
     """
@@ -30,3 +31,18 @@ def extract_image_url(html_content):
     
     # If the above methods fail, add more methods or return None
     return None
+
+def fetch_image_data(image_url):
+    """
+    Fetches the image data from the provided URL.
+    
+    :param image_url: URL of the image to fetch.
+    :return: Binary content of the image or None if fetching fails.
+    """
+    try:
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            return response.content
+        return None
+    except Exception as e:
+        return None
