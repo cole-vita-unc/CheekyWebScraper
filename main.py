@@ -40,6 +40,7 @@ chrome_options.add_experimental_option('useAutomationExtension', False)
 # s = Service('Users/user/Downloads/chromedriver_mac64')  
 # driver = webdriver.Chrome(service=s, options=chrome_options)
 
+#TODO: Fix Chrome Driver
 driver = Driver(uc=True)
 driver.get("https://nowsecure.nl/#relax")
 time.sleep(6)
@@ -59,6 +60,23 @@ for link in test_input_links:
         # Navigate to the page
         driver.get(link)
 
+        ### DISMISSING POP-UPS ###
+        try:
+            # Wait for pop-ups to load
+            time.sleep(1)
+            
+            # Attempt to close by clicking common buttons
+            close_buttons = ["popup-close", "modal-close", "close-button"]
+            for button_class in close_buttons:
+                close_button = driver.find_element_by_class_name(button_class)
+                if close_button:
+                    close_button.click()
+                    time.sleep(1)  # Give time for the pop-up to close
+                    break
+        except Exception as e:
+            # If no pop-up close button is found or any other error occurs, we simply pass and continue
+            pass
+
         # Get the page source and parse it using BeautifulSoup
         html = BeautifulSoup(driver.page_source, 'html.parser')
 
@@ -68,17 +86,21 @@ for link in test_input_links:
         # Extract the image URL from the HTML
         image_url = extract_image_url(html)
 
+        print(f"Processing website at index {test_input_links.index(link)}: {link.split('/')[2]}")
+
         # Fetch the image data if the URL is extracted successfully
         image_data = None
         if image_url:
             image_data = fetch_image_data(image_url)
-
-        # Save the image to the local filesystem 
-        if image_data:
-            image_filename = f"image_{test_input_links.index(link)}.jpg"
-            with open(image_filename, 'wb') as img_file:
-                img_file.write(image_data)
-            print(f"Image saved as {image_filename}")
+            if image_data:
+                image_filename = f"image_{test_input_links.index(link)}.jpg"
+                with open(image_filename, 'wb') as img_file:
+                    img_file.write(image_data)
+                print(f"Image successfully extracted and saved as {image_filename}")
+            else:
+                print(f"Failed to fetch image data for link at index {test_input_links.index(link)}")
+        else:
+            print(f"Failed to extract image URL for link at index {test_input_links.index(link)}")
 
 
 #### PRICE EXTRACTION ####
