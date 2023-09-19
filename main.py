@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 from openai_nlp import updateWithNLP
 from price_parser import extractPriceWithJS
@@ -29,7 +30,7 @@ extracted_fields = {}
 
 ########### SESSION CREATION AND FUNCTION CALLS ############
 
-chrome_options = Options()
+chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")  # Run in headless mode
 chrome_options.add_argument("--disable-images")  # Disable images
 chrome_options.add_argument("start-maximized")
@@ -37,13 +38,13 @@ chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 chrome_options.add_experimental_option('useAutomationExtension', False)
 
 
-# s = Service('Users/user/Downloads/chromedriver_mac64')  
-# driver = webdriver.Chrome(service=s, options=chrome_options)
+# s = Service('/Users/user/Downloads/chromedriver_mac64/chromedriver')  
+driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
 
-#TODO: Fix Chrome Driver
-driver = Driver(uc=True)
-driver.get("https://nowsecure.nl/#relax")
-time.sleep(6)
+## Backup driver
+# driver = Driver(uc=True)
+# driver.get("https://nowsecure.nl/#relax")
+# time.sleep(6)
 
 stealth(driver,
         languages=["en-US", "en"],
@@ -83,43 +84,43 @@ for link in test_input_links:
 
 ### IMAGE TESTING ###
 
-        # Extract the image URL from the HTML
-        image_url = extract_image_url(html)
+        # # Extract the image URL from the HTML
+        # image_url = extract_image_url(html)
 
-        print(f"Processing website at index {test_input_links.index(link)}: {link.split('/')[2]}")
+        # print(f"Processing website at index {test_input_links.index(link)}: {link.split('/')[2]}")
 
-        # Fetch the image data if the URL is extracted successfully
-        image_data = None
-        if image_url:
-            image_data = fetch_image_data(image_url)
-            if image_data:
-                image_filename = f"image_{test_input_links.index(link)}.jpg"
-                with open(image_filename, 'wb') as img_file:
-                    img_file.write(image_data)
-                print(f"Image successfully extracted and saved as {image_filename}")
-            else:
-                print(f"Failed to fetch image data for link at index {test_input_links.index(link)}")
-        else:
-            print(f"Failed to extract image URL for link at index {test_input_links.index(link)}")
+        # # Fetch the image data if the URL is extracted successfully
+        # image_data = None
+        # if image_url:
+        #     image_data = fetch_image_data(image_url)
+        #     if image_data:
+        #         image_filename = f"image_{test_input_links.index(link)}.jpg"
+        #         with open(image_filename, 'wb') as img_file:
+        #             img_file.write(image_data)
+        #         print(f"Image successfully extracted and saved as {image_filename}")
+        #     else:
+        #         print(f"Failed to fetch image data for link at index {test_input_links.index(link)}")
+        # else:
+        #     print(f"Failed to extract image URL for link at index {test_input_links.index(link)}")
 
 
-#### PRICE EXTRACTION ####
+### PRICE EXTRACTION ####
 
-        # extracted_fields["PRICE"] = None
+        extracted_fields["PRICE"] = None
 
-        # extracted_fields = extractFromTags(html)
+        extracted_fields = extractFromTags(html)
 
-        # if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
-        #     extracted_fields["PRICE"] = extractPriceWithJS(driver)
+        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
+            extracted_fields["PRICE"] = extractPriceWithJS(driver)
 
-        # if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
-        #     if((product_info := getProductSchema(html)) is not None):
-        #         extracted_fields.update(extractSchemaFields(product_info))
+        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
+            if((product_info := getProductSchema(html)) is not None):
+                extracted_fields.update(extractSchemaFields(product_info))
 
 
         
 
-        # print(extracted_fields["PRICE"])
+        print(extracted_fields["PRICE"])
         
 ### ITEM INFO TESTING 
 
