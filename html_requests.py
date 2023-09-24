@@ -49,7 +49,7 @@ def extractSchemaFields(product_schema):
         return None
 
     # Initialize an empty dictionary to hold the extracted fields
-    extracted_fields = {"TITLE": None, "BRAND": None, "Type": None, "PRICE": None, "COLOR": None, "GENDER": None}
+    extracted_fields = {"TITLE": None, "BRAND": None, "TYPE": None, "PRICE": None, "COLOR": None, "GENDER": None}
 
     # Extract 'PRODUCT_TYPE', 'PRICE', 'COLOR', and 'BRAND'
     if "name" in product_schema:
