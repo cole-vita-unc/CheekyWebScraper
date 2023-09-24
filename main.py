@@ -11,15 +11,25 @@ from image_extract import *
 from seleniumbase import Driver 
 import time
 import csv
+from collections import defaultdict
+import os
 
 # Current testing links 
-test_input_links = ['https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
-                   'https://www.zara.com/us/en/convertible-crop-jacket-p04661815.html?v1=272715073&v2=2184220', 
-                   'https://www.lulus.com/products/show-stopper-cream-embroidered-sequin-bodycon-midi-dress/856342.html',
-                   'https://www.madewell.com/on/demandware.store/Sites-madewellUS-Site/en_US/Product-Multisell?externalProductCodes=NK023,NK842,NH399,NL556'
-                   'https://www.macys.com/shop/product/levis-womens-726-high-rise-flare-jeans?ID=14231961&CategoryID=51475'
-                   'https://www.express.com/clothing/women/stylist-super-high-waisted-pleated-pull-on-shorts/pro/03016256/color/RUM%20RAISIN/',
-                   'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
+test_input_links = ['https://www.fashionnova.com/products/oceanside-affair-1-piece-bikini-jade', 
+                   'https://www.target.com/p/women-s-flutter-short-sleeve-dress-universal-thread/-/A-87567817?preselect=87460239#lnk=sametab', 
+                   'https://www.freepeople.com/shop/lyla-linen-trousers/?category=trendspotting-western-femme&color=224&type=REGULAR&quantity=1',
+                   'https://www.ae.com/us/en/p/women/tops/tank-tops/ae-one-shoulder-tank-top/0366_5597_500?menu=cat4840004', 
+                   'https://www.aritzia.com/us/en/product/generation-blazer/104959.html?dwvar_104959_color=10006', 
+                   'https://www.thereformation.com/products/chania-silk-dress/1310188VLL.html', 
+                   'https://savedbythedress.com/collections/maternity/products/black-maternity-maxi-dress-with-slit-and-short-sleeves-11',
+                   'https://www.bloomingdales.com/shop/product/aqua-fringed-knit-bodycon-midi-dress-100-exclusive?ID=4697714&CategoryID=1195659',
+                   'https://www.anthropologie.com/shop/suboo-frida-plunge-maxi-dress?category=resort-wear&color=266&type=STANDARD&quantity=1', 
+                   'https://tjmaxx.tjx.com/store/jump/product/women/Made-In-Italy-14k-Gold-Gothic-Initial-Signet-Ring/1000784298?colorId=NS11120694&pos=1:10&N=2107733895', 
+                   'https://www.bershka.com/us/elastic-denim-jumpsuit-with-cut-out-back-c0p137699688.html?colorId=800&stylismId=2', 
+                   'https://www.farmrio.com/products/beach-toucans-scarf-lenzing-ecovero-viscose-kimono',
+                   'https://www.journelle.com/products/onl-10011-wild-rose-print?variant=42339167764659', 
+                   'https://www.yandy.com/products/naughty-nights-tube-chemise-set', 
+                   'https://www.savagex.com/shop/baroque-bondage-open-back-brazilian-ud2148800-0687-12089320?psrc=featured_categories_best-sellers',  
                     ]
 
 ########### SESSION CREATION AND FUNCTION CALLS ############
@@ -48,13 +58,21 @@ stealth(driver,
         )
 
 fieldnames = ["Link", "Image", "Title", "Price", "Brand", "Color", "Gender"] 
+summary = defaultdict(int)
+total_links = len(test_input_links)
+
+if not os.path.exists('results.csv'):
+    with open('results.csv', 'w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
 
 # Loop through all links and get the HTML content
-with open('results.csv', mode='w', newline='', encoding='utf-8') as file:
+with open('results.csv', mode='a', newline='', encoding='utf-8') as file:
     writer = csv.DictWriter(file, fieldnames=fieldnames)
     writer.writeheader()
     for link in test_input_links:
-        result_dict = {"Link": link, "Image": "No", "Price": "No", "Title": "No", "Brand": "No", "Color": "No", "Gender": "No"}
+        # company = link.split('/')[-2] if '/' in link else link
+        result_dict = {"Link": link, "Title": "0", "Brand": "0", "Price": "0", "Color": "0", "Gender": "0"}
         try:
             driver.get(link)
 
@@ -62,13 +80,14 @@ with open('results.csv', mode='w', newline='', encoding='utf-8') as file:
             
             img = extract_image_url(html)
             if img:
-                result_dict["Image"] = "Yes"
+                result_dict["Image"] = "1"
             else:
                 print(f"Image not extracted for {link}")
+                result_dict["Image"] = "0"
             
             price = extractPriceWithJS(driver)
             if price:
-                result_dict["Price"] = "Yes"
+                result_dict["Price"] = "1"
 
             if (product_info := getProductSchema(html)) is not None:
                 item_fields = extractSchemaFields(product_info)
@@ -76,17 +95,21 @@ with open('results.csv', mode='w', newline='', encoding='utf-8') as file:
                 item_fields = extractFromTags(html) or {}
 
             if item_fields.get("TITLE"):
-                result_dict["Title"] = "Yes"
+                result_dict["Title"] = "1"
             if item_fields.get("BRAND"):
-                result_dict["Brand"] = "Yes"
+                result_dict["Brand"] = "1"
             if item_fields.get("COLOR"):
-                result_dict["Color"] = "Yes"
+                result_dict["Color"] = "1"
             if item_fields.get("GENDER"):
-                result_dict["Gender"] = "Yes"
+                result_dict["Gender"] = "1"
 
-            if item_fields["PRICE"] is None or item_fields["PRICE"] in ["0", "1"]:
-                item_fields["PRICE"] = price
-
+            if price:
+                result_dict["Price"] = "1"
+            else:
+                item_fields["PRICE"] = item_fields.get("PRICE") 
+                if item_fields["PRICE"] is None or item_fields["PRICE"] in ["0", "1"]:
+                    item_fields["PRICE"] = 0
+            
             writer.writerow(result_dict)
 
         except Exception as e:
