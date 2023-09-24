@@ -10,6 +10,7 @@ from html_requests import *
 from image_extract import *
 from seleniumbase import Driver 
 import time
+import csv
 
 # Current testing links 
 test_input_links = ['https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-Overall-Romper-Without-Tube-Top-p-10748193-cat-1860.html?src_identifier=fc%3DWomen%60sc%3DCLOTHING%60tc%3DJUMPSUITS%20%26%20BODYSUITS%60oc%3DJumpsuits%60ps%3Dtab01navbar05menu05dir01%60jc%3Dreal_1860&src_module=topcat&src_tab_page_id=page_home1685625317165&mallCode=1', 
@@ -21,13 +22,6 @@ test_input_links = ['https://us.shein.com/EMERY-ROSE-Knot-Front-Pocket-Patched-O
                    'https://www.uniqlo.com/us/en/products/E456191-000/00?colorDisplayCode=01&sizeDisplayCode=003'
                     ]
 
-
-# Empty list to store the resulting HTML and product info
-output_html = []
-product_info_list = []
-extracted_fields = {}
-
-
 ########### SESSION CREATION AND FUNCTION CALLS ############
 
 chrome_options = webdriver.ChromeOptions()
@@ -37,14 +31,12 @@ chrome_options.add_argument("start-maximized")
 chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 chrome_options.add_experimental_option('useAutomationExtension', False)
 
-
-# s = Service('/Users/user/Downloads/chromedriver_mac64/chromedriver')  
-driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
-
 ## Backup driver
 # driver = Driver(uc=True)
 # driver.get("https://nowsecure.nl/#relax")
 # time.sleep(6)
+
+driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
 
 stealth(driver,
         languages=["en-US", "en"],
@@ -55,31 +47,54 @@ stealth(driver,
         fix_hairline=True,
         )
 
+fieldnames = ["Link", "Image", "Title", "Price", "Brand", "Color", "Gender"] 
+
 # Loop through all links and get the HTML content
-for link in test_input_links:
-    try:
-        # Navigate to the page
-        driver.get(link)
-
-        ### DISMISSING POP-UPS ###
+with open('results.csv', mode='w', newline='', encoding='utf-8') as file:
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    for link in test_input_links:
+        result_dict = {"Link": link, "Image": "No", "Price": "No", "Title": "No", "Brand": "No", "Color": "No", "Gender": "No"}
         try:
-            # Wait for pop-ups to load
-            time.sleep(1)
-            
-            # Attempt to close by clicking common buttons
-            close_buttons = ["popup-close", "modal-close", "close-button"]
-            for button_class in close_buttons:
-                close_button = driver.find_element_by_class_name(button_class)
-                if close_button:
-                    close_button.click()
-                    time.sleep(1)  # Give time for the pop-up to close
-                    break
-        except Exception as e:
-            # If no pop-up close button is found or any other error occurs, we simply pass and continue
-            pass
+            driver.get(link)
 
-        # Get the page source and parse it using BeautifulSoup
-        html = BeautifulSoup(driver.page_source, 'html.parser')
+            html = BeautifulSoup(driver.page_source, 'html.parser')
+            
+            img = extract_image_url(html)
+            if img:
+                result_dict["Image"] = "Yes"
+            else:
+                print(f"Image not extracted for {link}")
+            
+            price = extractPriceWithJS(driver)
+            if price:
+                result_dict["Price"] = "Yes"
+
+            if (product_info := getProductSchema(html)) is not None:
+                item_fields = extractSchemaFields(product_info)
+            else:
+                item_fields = extractFromTags(html) or {}
+
+            if item_fields.get("TITLE"):
+                result_dict["Title"] = "Yes"
+            if item_fields.get("BRAND"):
+                result_dict["Brand"] = "Yes"
+            if item_fields.get("COLOR"):
+                result_dict["Color"] = "Yes"
+            if item_fields.get("GENDER"):
+                result_dict["Gender"] = "Yes"
+
+            if item_fields["PRICE"] is None or item_fields["PRICE"] in ["0", "1"]:
+                item_fields["PRICE"] = price
+
+            writer.writerow(result_dict)
+
+        except Exception as e:
+            print(f"Error processing {link}: {str(e)}")
+            writer.writerow(result_dict)
+
+driver.quit()
+
 
 
 ### IMAGE TESTING ###
@@ -104,23 +119,23 @@ for link in test_input_links:
         #     print(f"Failed to extract image URL for link at index {test_input_links.index(link)}")
 
 
-### PRICE EXTRACTION ####
+# ### PRICE EXTRACTION TESTING ####
 
-        extracted_fields["PRICE"] = None
+#         extracted_fields["PRICE"] = None
 
-        extracted_fields = extractFromTags(html)
+#         extracted_fields = extractFromTags(html)
 
-        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
-            extracted_fields["PRICE"] = extractPriceWithJS(driver)
+#         if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
+#             extracted_fields["PRICE"] = extractPriceWithJS(driver)
 
-        if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
-            if((product_info := getProductSchema(html)) is not None):
-                extracted_fields.update(extractSchemaFields(product_info))
+#         if extracted_fields["PRICE"] is None or extracted_fields["PRICE"] in ["0", "1"]:
+#             if((product_info := getProductSchema(html)) is not None):
+#                 extracted_fields.update(extractSchemaFields(product_info))
 
 
         
 
-        print(extracted_fields["PRICE"])
+#         print(extracted_fields["PRICE"])
         
 ### ITEM INFO TESTING 
 
@@ -140,12 +155,12 @@ for link in test_input_links:
         #         extracted_fields.append(None)
         #         product_info_list.append(None) # For Testing
 
-    except Exception as e:
-        output_html.append(None)
-        print('An error occurred: ', e)
+#     except Exception as e:
+#         output_html.append(None)
+#         print('An error occurred: ', e)
 
-# Quit the webdriver when done
-driver.quit()
+# # Quit the webdriver when done
+# driver.quit()
 
 ######### Update with NLP ############
 
