@@ -1,5 +1,11 @@
 # Cheeky Web Scraper
 
+## Setup Instructions
+
+python3 -m pip install requirements.txt 
+
+For testing: Enter product URLs into test_input_links in main.py and run
+
 ## Description 
 
 This project is a web scraping tool designed to extract product information from web pages in a structured format. It aims to fetch detailed product information like product name, brand, type (i.e. shirt, pants, shoes, skirt, etc...) price, color, and gender from a given webpage using Python.
