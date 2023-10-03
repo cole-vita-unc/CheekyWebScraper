@@ -1,0 +1,16 @@
+json
+logging
+requests
+beautifulsoup4
+selenium
+webdriver-manager
+selenium-stealth
+openai-nlp
+price-parser
+html-requests
+image-extract
+seleniumbase
+time
+csv
+collections
+os
