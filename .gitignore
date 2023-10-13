@@ -1,2 +1,4 @@
 config.py
 
+__pycache__/html_requests.cpython-39.pyc
+__pycache__/image_extract.cpython-39.pyc
