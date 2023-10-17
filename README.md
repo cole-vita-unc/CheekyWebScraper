@@ -8,6 +8,17 @@ python3 -m pip install requirements.txt
 
 For testing: Enter product URLs into test_input_links in main.py and run
 
+Pulls Image, Title, Price, and Brand for:
+Nike, H&M, Essentials, ASOS, Macy's, Uniqlo, JCPenney, Tobi, Modcloth, Revolve, Loft, Forever21, Fashion Nova, Aritzia, The Reformation, Bloomingdales,
+Farmrio, Journelle, American Eagle
+
+Pulls Image, Title For:
+Etsy, GAP, Ajio, Everlane, Zappos, Francescas, Old Navy, TJ Maxx, Yandy, SavageXFendy, 
+Nike, H&M, Essentials, ASOS, Macy's, Uniqlo, JCPenney, Tobi, Modcloth, Revolve, Loft, Forever21, Fashion Nova, Aritzia, The Reformation, Bloomingdales,
+Farmrio, Journelle, American Eagle
+
+
+
 ## Description 
 
 This project is a web scraping tool designed to extract product information from web pages in a structured format. It aims to fetch detailed product information like product name, brand, type (i.e. shirt, pants, shoes, skirt, etc...) price, color, and gender from a given webpage using Python.
