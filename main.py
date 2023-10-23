@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
-from openai_nlp import updateWithNLP
+# from openai_nlp import updateWithNLP
 from price_parser import extractPriceWithJS
 from html_requests import *
 from image_extract import *
