@@ -2,37 +2,29 @@
 
 ## Setup Instructions
 
-source venv/bin/activate
+### Container 
 
-pip3 install -r requirements.txt 
+Build the image: `docker build -t webscraper -f .devcontainer/Dockerfile`
+
+Run the container `docker run webscraper` 
+
+### Virtual Environment 
+
+Activate the venv: `source venv/bin/activate`
+
+Install packages: `pip3 install -r requirements.txt`
 
 For testing: Enter product URLs into test_input_links in main.py and run
 
-**Pulls Image, Title, Price, and Brand for:**
-Nike, H&M, Essentials, ASOS, Macy's, Uniqlo, JCPenney, Tobi, Modcloth, Revolve, Loft, Forever21, Fashion Nova, Aritzia, The Reformation, Bloomingdales,
-Farmrio, Journelle, American Eagle
-
-**Pulls Image, Title For:**
-Etsy, GAP, Ajio, Everlane, Zappos, Francescas, Old Navy, TJ Maxx, Yandy, SavageXFendy
-
-
 ## Description 
 
-This project is a web scraping tool designed to extract product information from web pages in a structured format. It aims to fetch detailed product information like product name, brand, type (i.e. shirt, pants, shoes, skirt, etc...) price, color, and gender from a given webpage using Python.
+This project is a web scraping tool designed to extract product information from web pages in a structured format. It aims to fetch detailed product information like the product image, name, brand, type (i.e. shirt, pants, shoes, skirt, etc...) price, color, and gender from a given webpage using Python.
 
 The goal of this tool is to leverage the structured data present in the form of JSON-LD scripts and HTML tags on the webpage. If the JSON-LD format is present, it will try to extract the product schema from it; otherwise, it resorts to the extraction from HTML tags.
 
 The tool makes use of Selenium with the Chrome WebDriver for web scraping and BeautifulSoup for parsing the HTML content.
 
 This program uses Natural Language Processing (NLP) capabilities of OpenAI's GPT-3 model to refine and enhance the product information extracted. The function updateWithNLP() is responsible for generating NLP output and parsing it to return the updated product information.
-
-### Prerequisites
-In order to use the OpenAI API, you will need to set your OpenAI API key in the environment variables. You can do this by adding the following line to your shell initialization script (e.g., .bashrc, zshrc, etc.) or by running it in the command line before the fine-tuning command:
-
-export OPENAI_API_KEY="<OPENAI_API_KEY>"
-
-Make sure to replace <OPENAI_API_KEY> with your actual OpenAI API key.
-
 
 ## Current Success Rates 
 Out of 55 tested websites, the program succesfully captured the HTML of 52 of them (92.7%). 
@@ -45,7 +37,24 @@ For the 52 websites where the HTML was recovered, the program retrieved the foll
 - Product Color: 35.2% 
 - Product Gender: 66.7%
 
-- Average number of attributes updated by NLP: 2.2 
+- Average number of attributes updated by NLP: 2.2
+
+## Websites working 
+
+**Pulls Image, Title, Price, and Brand for:**
+Nike, H&M, Essentials, ASOS, Macy's, Uniqlo, JCPenney, Tobi, Modcloth, Revolve, Loft, Forever21, Fashion Nova, Aritzia, The Reformation, Bloomingdales,
+Farmrio, Journelle, American Eagle
+
+**Pulls Image, Title For:**
+Etsy, GAP, Ajio, Everlane, Zappos, Francescas, Old Navy, TJ Maxx, Yandy, SavageXFendy
+
+### Prerequisites (only needed when using updateWithNLP from openai_nlp.py)
+In order to use the OpenAI API, you will need to set your OpenAI API key in the environment variables. You can do this by adding the following line to your shell initialization script (e.g., .bashrc, zshrc, etc.) or by running it in the command line before the fine-tuning command:
+
+export OPENAI_API_KEY="<OPENAI_API_KEY>"
+
+Make sure to replace <OPENAI_API_KEY> with your actual OpenAI API key.
+
 
 ## Possible Improvements 
 
