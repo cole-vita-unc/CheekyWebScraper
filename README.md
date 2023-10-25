@@ -4,7 +4,7 @@
 
 source venv/bin/activate
 
-python3 -m pip install requirements.txt 
+pip3 install -r requirements.txt 
 
 For testing: Enter product URLs into test_input_links in main.py and run
 
