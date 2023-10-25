@@ -13,7 +13,8 @@ import time
 import csv
 from collections import defaultdict
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+import urllib.parse
 
 app = FastAPI()
 
@@ -22,15 +23,12 @@ async def root():
     return "Application live"
 
 @app.get("/item")
-async def read_item(url: str = ""):
-    return {"url": url}
-
-@app.get("/test")
-async def test():
-    return getData("hello")
+async def read_item(url: str):
+    if url == None or url == "":
+        raise HTTPException(status_code=400, detail="URL Missing")
+    return getData(url)
 
 def getData(test_input_link):
-    test_input_link = "https://www.fashionnova.com/products/oceanside-affair-1-piece-bikini-jade"
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")  # Run in headless mode
     chrome_options.add_argument("--disable-images")  # Disable images

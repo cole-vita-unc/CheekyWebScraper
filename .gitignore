@@ -1,5 +1,6 @@
 config.py
 
+__pycache__
 __pycache__/html_requests.cpython-39.pyc
 __pycache__/image_extract.cpython-39.pyc
 venv
